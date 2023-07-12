@@ -8,7 +8,7 @@ loginRouter.post("/", async (req, res) => {
   const { email, password } = req.body;
 
   const createToken = function (id) {
-    return jwt.sign({ id }, "SomeSecretCodeHere");
+    return jwt.sign({ id }, "SomeSecretCodeHere", { expiresIn: "7d" });
   };
 
   try {
@@ -23,14 +23,14 @@ loginRouter.post("/", async (req, res) => {
       if (comparePassword) {
         const token = createToken(matchedUser._id);
         res.cookie("token", token);
-        console.log("cookies result ", req.cookies);
-        res.status(200).send(`${matchedUser.username} logged in successfully!`);
+
+        res.status(200).send(`${matchedUser.name} logged in successfully!`);
       } else {
         res.status(400).send("Wrong credentials!");
       }
     }
   } catch (error) {
-    console.log("login", error);
+    console.log("error while logging in", error);
     res.status(400).send("Something went wrong!");
   }
 });

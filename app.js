@@ -9,8 +9,8 @@ const makefriendsRoute = require("./routes/makefriends");
 const userRoute = require("./routes/user");
 
 app.use(express.json());
-app.use(cookieParser());
 app.use(cors());
+app.use(cookieParser());
 app.use("/signup", signupRoute);
 app.use("/login", loginRoute);
 app.use("/makefriends", makefriendsRoute);
