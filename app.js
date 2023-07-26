@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-require("./db/db");
+require("./config/db");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const signupRouter = require("./routes/signup");
@@ -8,6 +8,7 @@ const loginRouter = require("./routes/login");
 const makefriendsRouter = require("./routes/makefriends");
 const userRouter = require("./routes/user");
 const logoutRouter = require("./routes/logout");
+const postRouter = require("./routes/post");
 
 app.use(express.json());
 app.use(
@@ -23,6 +24,7 @@ app.use("/login", loginRouter);
 app.use("/logout", logoutRouter);
 app.use("/makefriends", makefriendsRouter);
 app.use("/user", userRouter);
+app.use("/", postRouter);
 
 app.get("/", (req, res) => {
   res.send("Yo it worked!");

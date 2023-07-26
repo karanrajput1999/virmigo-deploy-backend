@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema(
     coverPic: { type: String, default: null },
     posts: { type: Array },
     comments: { type: Array },
+    friends: { type: Array },
     friendRequestsSent: { type: Array },
     friendRequests: { type: Array },
   },
