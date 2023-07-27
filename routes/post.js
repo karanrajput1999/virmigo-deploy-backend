@@ -41,7 +41,7 @@ postRouter
         // res.status(200).send("invalid token");
       }
     } catch (error) {
-      console.log("error while making get request to login", error);
+      console.log("error while making get request to post", error);
       res.status(500).send("Something went wrong!");
     }
   })
@@ -56,7 +56,7 @@ postRouter
       await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
 
       post.save();
-      res.status(201).send(post);
+      res.status(201).json(post);
     } catch (error) {
       console.log("error while posting a post from backend", error);
     }

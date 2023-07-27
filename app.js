@@ -5,7 +5,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const signupRouter = require("./routes/signup");
 const loginRouter = require("./routes/login");
-const makefriendsRouter = require("./routes/makefriends");
+const findfriendsRouter = require("./routes/findfriends");
 const userRouter = require("./routes/user");
 const logoutRouter = require("./routes/logout");
 const postRouter = require("./routes/post");
@@ -22,7 +22,7 @@ app.use(cookieParser());
 app.use("/signup", signupRouter);
 app.use("/login", loginRouter);
 app.use("/logout", logoutRouter);
-app.use("/makefriends", makefriendsRouter);
+app.use("/findfriends", findfriendsRouter);
 app.use("/user", userRouter);
 app.use("/", postRouter);
 
