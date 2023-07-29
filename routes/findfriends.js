@@ -8,7 +8,6 @@ const mongoose = require("mongoose");
 findfriendsRouter.get("/", async (req, res) => {
   try {
     const cookies = req.cookies["token"];
-    // console.log("this is cookies while get request to login", req.cookies);
     const verifiedToken = cookies && jwt.verify(cookies, "SomeSecretCodeHere");
 
     if (verifiedToken) {
@@ -32,10 +31,25 @@ findfriendsRouter.get("/", async (req, res) => {
 
 findfriendsRouter.post("/", async (req, res) => {
   try {
-    const { adminUserId } = req.body;
-    // const allUsers = await User.aggregate([{ $match: { _id: adminUserId } }]);
+    const { friendId } = req.body;
 
-    res.status(200).json({ allUsers });
+    const cookies = req.cookies["token"];
+    const verifiedToken = cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+
+    if (verifiedToken) {
+      const { id } = verifiedToken;
+      await User.updateOne(
+        { _id: id },
+        { $push: { friendRequestsSent: new mongoose.Types.ObjectId(friendId) } }
+      );
+      await User.updateOne(
+        { _id: friendId },
+        { $push: { friendRequests: new mongoose.Types.ObjectId(id) } }
+      );
+      res.status(200).json({ message: "friend request sent!" });
+    }
+
+    // res.status(200).send("sab ok hai ");
   } catch (error) {
     console.log("makefriends", error);
     res.status(400).send("Something went wrong!");
