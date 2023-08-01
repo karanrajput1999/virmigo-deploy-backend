@@ -23,7 +23,7 @@ class AuthController {
 
       res.status(200).json(newUserCopy);
     } catch (error) {
-      console.log("signup", error);
+      console.log("signup", error.message);
       res.status(500).json("Something went wrong!");
     }
   }

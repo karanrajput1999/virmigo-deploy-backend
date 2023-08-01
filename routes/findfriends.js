@@ -2,6 +2,7 @@ const express = require("express");
 const findfriendsRouter = express.Router();
 const User = require("../Models/user");
 const Post = require("../Models/post");
+const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
@@ -12,14 +13,11 @@ findfriendsRouter.get("/", async (req, res) => {
 
     if (verifiedToken) {
       const { id } = verifiedToken;
-
       const loggedInUser = await User.findOne({ _id: id });
-      const allFriendRequests = await User.find({
-        _id: { $in: loggedInUser.friendRequests },
-      });
-      const allUsers = await User.find({
-        _id: { $ne: id },
-      });
+      const allUsers = await User.find({ _id: { $ne: id } });
+      const allFriendRequests = await FriendRequest.find({ receiver: id });
+
+      console.log(allFriendRequests);
 
       res.status(200).json({ loggedInUser, allUsers, allFriendRequests });
     } else {
@@ -34,57 +32,25 @@ findfriendsRouter.get("/", async (req, res) => {
 
 findfriendsRouter.post("/", async (req, res) => {
   try {
-    const { friendId, acceptFriendId } = req.body;
-
     const cookies = req.cookies["token"];
     const verifiedToken = cookies && jwt.verify(cookies, "SomeSecretCodeHere");
 
     if (verifiedToken) {
       const { id } = verifiedToken;
-      // when a friend request is sent
-      if (friendId) {
-        await User.updateOne(
-          { _id: id },
-          {
-            $push: {
-              friendRequestsSent: new mongoose.Types.ObjectId(friendId),
-            },
-          }
-        );
-        await User.updateOne(
-          { _id: friendId },
-          { $push: { friendRequests: new mongoose.Types.ObjectId(id) } }
-        );
-        res.status(200).json({ message: "friend request sent!" });
-      } // when a friend request is accepted
-      else if (acceptFriendId) {
-        await User.updateOne(
-          { _id: id },
-          {
-            $push: { friends: new mongoose.Types.ObjectId(acceptFriendId) },
-            $pull: {
-              friendRequests: new mongoose.Types.ObjectId(acceptFriendId),
-            },
-          }
-        );
-        await User.updateOne(
-          { _id: id },
-          {
-            $pull: {
-              friendRequestsSent: new mongoose.Types.ObjectId(acceptFriendId),
-            },
-          }
-        );
-        await User.updateOne(
-          { _id: acceptFriendId },
-          { $push: { friends: new mongoose.Types.ObjectId(id) } }
-        );
+      const { receiverId } = req.body;
 
-        res.status(200).json({
-          newFriendId: new mongoose.Types.ObjectId(acceptFriendId),
-          message: "friend request accepted!",
-        });
-      }
+      const newFriendRequest = new FriendRequest({
+        sender: id,
+        receiver: receiverId,
+      });
+
+      console.log("this was logged");
+      console.log(newFriendRequest);
+      newFriendRequest.save();
+
+      res.status(201).json({ message: "friend Request Sent!" });
+    } else {
+      res.status(201).json({ message: "couldn't send the friend request!" });
     }
 
     // res.status(200).send("sab ok hai ");
