@@ -3,8 +3,6 @@ const logoutRouter = express.Router();
 
 logoutRouter.get("/", (req, res) => {
   try {
-    console.log("cookie here", req.cookies);
-
     res.clearCookie("token", {
       httpOnly: true,
       sameSite: "none",
