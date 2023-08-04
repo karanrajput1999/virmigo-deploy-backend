@@ -2,6 +2,7 @@ const express = require("express");
 const postRouter = express.Router();
 const Post = require("../Models/post");
 const User = require("../Models/user");
+const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
@@ -48,7 +49,30 @@ postRouter
         const allUsers = await User.find({
           _id: { $nin: [...loggedInUser.friends, id] },
         });
-        res.status(200).json({ userWithAllPosts, userAllFriends, allUsers });
+
+        // all the friend request user has sent
+        const friendRequestsSent = await FriendRequest.find({
+          sender: id,
+          status: 1,
+        });
+        // all the users whom friend request has been sent
+        const allFriendRequestsSent = await User.find({
+          _id: {
+            $in: friendRequestsSent.map(
+              (friendRequest) =>
+                new mongoose.Types.ObjectId(friendRequest.receiver)
+            ),
+          },
+        });
+
+        console.log("all the sent friend reqeust", allFriendRequestsSent);
+
+        res.status(200).json({
+          userWithAllPosts,
+          userAllFriends,
+          allUsers,
+          allFriendRequestsSent,
+        });
       } else {
         res.end();
         // res.status(200).send("invalid token");
@@ -63,7 +87,14 @@ postRouter
       const cookies = req.cookies["token"];
       const verifiedToken =
         cookies && jwt.verify(cookies, "SomeSecretCodeHere");
-      const { description, userId, username, unfriendId } = req.body;
+      const {
+        description,
+        userId,
+        username,
+        unfriendId,
+        friendRequestReceiverId,
+        cancelRequestId,
+      } = req.body;
 
       if (verifiedToken) {
         const { id } = verifiedToken;
@@ -92,6 +123,27 @@ postRouter
             { $pull: { friends: new mongoose.Types.ObjectId(id) } }
           );
           res.status(201).send("user unfriended");
+        }
+
+        if (friendRequestReceiverId) {
+          const friendRequest = await new FriendRequest({
+            sender: id,
+            receiver: friendRequestReceiverId,
+            status: 1,
+          });
+          friendRequest.save();
+          res.status(201).json({ message: "friend Request Sent!" });
+        }
+
+        if (cancelRequestId) {
+          await FriendRequest.findOneAndDelete({
+            sender: id,
+            receiver: cancelRequestId,
+            status: 1,
+          });
+          res
+            .status(200)
+            .json({ cancelRequestId, message: "friend Request cancelled!" });
         }
       }
     } catch (error) {
