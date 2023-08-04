@@ -15,9 +15,27 @@ findfriendsRouter.get("/", async (req, res) => {
       const { id } = verifiedToken;
       const loggedInUser = await User.findOne({ _id: id });
       // returns all the users that are not friends and the logged in user himself
-      const allUsers = await User.find({
-        _id: { $nin: [...loggedInUser.friends, id] },
+      const friendRequestsReceived = await FriendRequest.find({
+        receiver: id,
+        status: 1,
       });
+
+      const allSenders = friendRequestsReceived.map((friendRequestSender) => {
+        return friendRequestSender.sender;
+      });
+      console.log("user has received fr from this user", allSenders.length);
+
+      const allUsers =
+        allSenders.length === 0
+          ? await User.find({
+              _id: { $nin: [...loggedInUser.friends, id] },
+            })
+          : await User.find({
+              _id: { $nin: [...loggedInUser.friends, ...allSenders, id] },
+            });
+      // const allUsers = await User.find({
+      //   _id: { $nin: [...loggedInUser.friends, id] },
+      // });
 
       // all the friend request user has sent
       const friendRequestsSent = await FriendRequest.find({
@@ -86,7 +104,7 @@ findfriendsRouter.post("/", async (req, res) => {
       } else if (senderId) {
         // updates the friend request's status to accepted
         await FriendRequest.updateOne(
-          { sender: senderId, receiver: id },
+          { sender: senderId, receiver: id, status: 1 },
           { status: 2 }
         );
         // udpates the friend array of both the sender and receiver
@@ -117,7 +135,11 @@ findfriendsRouter.post("/", async (req, res) => {
       } // rejecting friend request
       else if (rejectSenderId) {
         await FriendRequest.updateOne(
-          { sender: rejectSenderId, receiver: id },
+          {
+            sender: rejectSenderId,
+            receiver: id,
+            status: 1,
+          },
           { status: 3 }
         );
         res

@@ -3,6 +3,7 @@ const postRouter = express.Router();
 const Post = require("../Models/post");
 const User = require("../Models/user");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 postRouter
   .route("/")
@@ -35,7 +36,19 @@ postRouter
             },
           },
         ]);
-        res.status(200).json({ userWithAllPosts });
+        const userAllFriends = await User.aggregate([
+          {
+            $match: { _id: { $in: loggedInUser.friends } },
+          },
+          {
+            $project: { password: 0 },
+          },
+        ]);
+
+        const allUsers = await User.find({
+          _id: { $nin: [...loggedInUser.friends, id] },
+        });
+        res.status(200).json({ userWithAllPosts, userAllFriends, allUsers });
       } else {
         res.end();
         // res.status(200).send("invalid token");
@@ -47,16 +60,40 @@ postRouter
   })
   .post(async (req, res) => {
     try {
-      const { description, userId, username } = req.body;
-      const post = await new Post({
-        description,
-        userId: userId,
-        username,
-      });
-      await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
+      const cookies = req.cookies["token"];
+      const verifiedToken =
+        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+      const { description, userId, username, unfriendId } = req.body;
 
-      post.save();
-      res.status(201).json(post);
+      if (verifiedToken) {
+        const { id } = verifiedToken;
+        const loggedInUser = await User.findOne({ _id: Object(id) });
+
+        if (description && userId && username) {
+          const post = await new Post({
+            description,
+            userId: userId,
+            username,
+          });
+          await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
+          post.save();
+
+          res.status(201).json(post);
+        }
+
+        if (unfriendId) {
+          console.log("friend id to unfriend", unfriendId);
+          await User.updateOne(
+            { _id: id },
+            { $pull: { friends: new mongoose.Types.ObjectId(unfriendId) } }
+          );
+          await User.updateOne(
+            { _id: unfriendId },
+            { $pull: { friends: new mongoose.Types.ObjectId(id) } }
+          );
+          res.status(201).send("user unfriended");
+        }
+      }
     } catch (error) {
       console.log("error while posting a post from backend", error);
     }

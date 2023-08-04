@@ -1,14 +1,26 @@
 const express = require("express");
 const userRouter = express.Router();
 const User = require("../Models/user");
+const jwt = require("jsonwebtoken");
 
-userRouter.get("/:id", async (req, res) => {
+userRouter.get("/:userId", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { userId } = req.params;
 
-    const user = await User.findOne({ _id: id });
-
-    res.status(200).json(user);
+    const cookies = req.cookies["token"];
+    // console.log("this is cookies while get request to signup", req.cookies);
+    const verifiedToken = cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+    console.log("this is being run with cookies ", cookies);
+    if (verifiedToken) {
+      const { id } = verifiedToken;
+      const loggedInUser = await User.findOne({ _id: Object(id) });
+      const user = await User.findOne({ _id: userId });
+      const { password, ...userProfile } = await user._doc;
+      console.log(loggedInUser, userProfile);
+      res.status(200).json({ userProfile, loggedInUser });
+    } else {
+      res.status(400).send("Something went wrong! while fetching user profile");
+    }
   } catch (error) {
     res
       .status(400)
