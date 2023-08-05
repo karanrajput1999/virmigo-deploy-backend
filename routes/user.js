@@ -2,6 +2,8 @@ const express = require("express");
 const userRouter = express.Router();
 const User = require("../Models/user");
 const jwt = require("jsonwebtoken");
+const { default: mongoose } = require("mongoose");
+const FriendRequest = require("../Models/friendRequest");
 
 userRouter.get("/:userId", async (req, res) => {
   try {
@@ -22,10 +24,29 @@ userRouter.get("/:userId", async (req, res) => {
           $project: { password: 0 },
         },
       ]);
-      console.log("user all friends from profile", userAllFriends);
-      res.status(200).json({ userProfile, loggedInUser, userAllFriends });
+      // all the friend request user has sent
+      const friendRequestsSent = await FriendRequest.find({
+        sender: id,
+        status: 1,
+      });
+      // all the users whom friend request has been sent
+      const allFriendRequestsSent = await User.find({
+        _id: {
+          $in: friendRequestsSent.map(
+            (friendRequest) =>
+              new mongoose.Types.ObjectId(friendRequest.receiver)
+          ),
+        },
+      });
+
+      res.status(200).json({
+        userProfile,
+        loggedInUser,
+        userAllFriends,
+        allFriendRequestsSent,
+      });
     } else {
-      res.end();
+      res.status(400).end();
     }
   } catch (error) {
     res
@@ -34,19 +55,46 @@ userRouter.get("/:userId", async (req, res) => {
   }
 });
 
-userRouter.post("/:id", async (req, res) => {
-  // id of user, we want to send to friend request to
-  const { id } = req.params;
-  // user sending the friend request
-  const { email } = req.body;
+userRouter.post("/:userId", async (req, res) => {
+  const { unfriendId, friendRequestReceiverId, cancelRequestId } = req.body;
 
   try {
-    const friendRequestSender = await User.updateOne(
-      { email },
-      { $push: { friendRequestsSent: id } }
-    );
+    const cookies = req.cookies["token"];
+    const verifiedToken = cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+    if (verifiedToken) {
+      const { id } = verifiedToken;
 
-    res.status(200).send(friendRequestSender);
+      if (unfriendId) {
+        await User.updateOne(
+          { _id: id },
+          { $pull: { friends: new mongoose.Types.ObjectId(unfriendId) } }
+        );
+        await User.updateOne(
+          { _id: unfriendId },
+          { $pull: { friends: new mongoose.Types.ObjectId(id) } }
+        );
+        res.status(200).send("user unfriended");
+      }
+      if (friendRequestReceiverId) {
+        const friendRequest = await new FriendRequest({
+          sender: id,
+          receiver: friendRequestReceiverId,
+          status: 1,
+        });
+        friendRequest.save();
+        res.status(201).json({ message: "friend Request Sent!" });
+      }
+      if (cancelRequestId) {
+        await FriendRequest.findOneAndDelete({
+          sender: id,
+          receiver: cancelRequestId,
+          status: 1,
+        });
+        res
+          .status(200)
+          .json({ cancelRequestId, message: "friend Request cancelled!" });
+      }
+    }
   } catch (error) {
     console.log("user", error);
     res.status(400).send("Something went wrong!");
