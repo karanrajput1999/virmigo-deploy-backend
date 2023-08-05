@@ -8,18 +8,24 @@ userRouter.get("/:userId", async (req, res) => {
     const { userId } = req.params;
 
     const cookies = req.cookies["token"];
-    // console.log("this is cookies while get request to signup", req.cookies);
     const verifiedToken = cookies && jwt.verify(cookies, "SomeSecretCodeHere");
-    console.log("this is being run with cookies ", cookies);
     if (verifiedToken) {
       const { id } = verifiedToken;
       const loggedInUser = await User.findOne({ _id: Object(id) });
       const user = await User.findOne({ _id: userId });
       const { password, ...userProfile } = await user._doc;
-      console.log(loggedInUser, userProfile);
-      res.status(200).json({ userProfile, loggedInUser });
+      const userAllFriends = await User.aggregate([
+        {
+          $match: { _id: { $in: loggedInUser.friends } },
+        },
+        {
+          $project: { password: 0 },
+        },
+      ]);
+      console.log("user all friends from profile", userAllFriends);
+      res.status(200).json({ userProfile, loggedInUser, userAllFriends });
     } else {
-      res.status(400).send("Something went wrong! while fetching user profile");
+      res.end();
     }
   } catch (error) {
     res
