@@ -1,103 +1,64 @@
 const express = require("express");
 const userRouter = express.Router();
+const UserController = require("../controllers/UserController");
+const Joi = require("joi");
 const User = require("../Models/user");
 const jwt = require("jsonwebtoken");
-const { default: mongoose } = require("mongoose");
-const FriendRequest = require("../Models/friendRequest");
 
-userRouter.get("/:userId", async (req, res) => {
+userRouter.get("/:userId", UserController.UserControllerGet);
+
+userRouter.post("/:userId", UserController.UserControllerPost);
+
+userRouter.patch("/:userId", async (req, res) => {
   try {
-    const { userId } = req.params;
-
     const cookies = req.cookies["token"];
     const verifiedToken = cookies && jwt.verify(cookies, "SomeSecretCodeHere");
     if (verifiedToken) {
       const { id } = verifiedToken;
       const loggedInUser = await User.findOne({ _id: Object(id) });
-      const user = await User.findOne({ _id: userId });
-      const { password, ...userProfile } = await user._doc;
-      const userAllFriends = await User.aggregate([
-        {
-          $match: { _id: { $in: loggedInUser.friends } },
-        },
-        {
-          $project: { password: 0 },
-        },
-      ]);
-      // all the friend request user has sent
-      const friendRequestsSent = await FriendRequest.find({
-        sender: id,
-        status: 1,
-      });
-      // all the users whom friend request has been sent
-      const allFriendRequestsSent = await User.find({
-        _id: {
-          $in: friendRequestsSent.map(
-            (friendRequest) =>
-              new mongoose.Types.ObjectId(friendRequest.receiver)
-          ),
-        },
+
+      const schema = Joi.object({
+        name: Joi.string().min(3).max(25).allow("").optional(),
+        email: Joi.string().email().allow("").optional(),
+        bio: Joi.string().min(3).max(100).allow("").optional(),
+        state: Joi.string().min(3).max(30).allow("").optional(),
       });
 
-      res.status(200).json({
-        userProfile,
-        loggedInUser,
-        userAllFriends,
-        allFriendRequestsSent,
-      });
+      const validatedValue = schema.validate(req.body);
+
+      if (validatedValue.error) {
+        console.log(validatedValue.error.message);
+        res.status(400).json({ message: validatedValue.error.message });
+      } else {
+        if (validatedValue.value.name) {
+          await User.updateOne(
+            { _id: id },
+            { name: validatedValue.value.name }
+          );
+        }
+        if (validatedValue.value.email) {
+          await User.updateOne(
+            { _id: id },
+            { email: validatedValue.value.email }
+          );
+        }
+        if (validatedValue.value.bio) {
+          await User.updateOne({ _id: id }, { bio: validatedValue.value.bio });
+        }
+        if (validatedValue.value.state) {
+          await User.updateOne(
+            { _id: id },
+            { livesIn: validatedValue.value.state }
+          );
+        }
+      }
+
+      res.status(200).json({ status: "OK" });
     } else {
       res.status(400).end();
     }
   } catch (error) {
-    res
-      .status(400)
-      .send("Something went wrong! while fetching user profile", error);
-  }
-});
-
-userRouter.post("/:userId", async (req, res) => {
-  const { unfriendId, friendRequestReceiverId, cancelRequestId } = req.body;
-
-  try {
-    const cookies = req.cookies["token"];
-    const verifiedToken = cookies && jwt.verify(cookies, "SomeSecretCodeHere");
-    if (verifiedToken) {
-      const { id } = verifiedToken;
-
-      if (unfriendId) {
-        await User.updateOne(
-          { _id: id },
-          { $pull: { friends: new mongoose.Types.ObjectId(unfriendId) } }
-        );
-        await User.updateOne(
-          { _id: unfriendId },
-          { $pull: { friends: new mongoose.Types.ObjectId(id) } }
-        );
-        res.status(200).send("user unfriended");
-      }
-      if (friendRequestReceiverId) {
-        const friendRequest = await new FriendRequest({
-          sender: id,
-          receiver: friendRequestReceiverId,
-          status: 1,
-        });
-        friendRequest.save();
-        res.status(201).json({ message: "friend Request Sent!" });
-      }
-      if (cancelRequestId) {
-        await FriendRequest.findOneAndDelete({
-          sender: id,
-          receiver: cancelRequestId,
-          status: 1,
-        });
-        res
-          .status(200)
-          .json({ cancelRequestId, message: "friend Request cancelled!" });
-      }
-    }
-  } catch (error) {
-    console.log("user", error);
-    res.status(400).send("Something went wrong!");
+    console.log("error while patching profile", error);
   }
 });
 

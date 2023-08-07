@@ -4,7 +4,7 @@ class Validators {
   signupValidator(req, res, next) {
     try {
       const schema = Joi.object({
-        name: Joi.string().min(3).max(30).required(),
+        name: Joi.string().min(3).max(25).required(),
         email: Joi.string().required(),
         password: Joi.string().min(4).max(20).required(),
         confirmPassword: Joi.string()

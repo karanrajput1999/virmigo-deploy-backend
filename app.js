@@ -14,13 +14,14 @@ app.use(express.json());
 app.use(
   cors({
     origin: "http://127.0.0.1:5173",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PATCH"],
     credentials: true,
   })
 );
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5173");
   res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
   next();
 });
 app.use(cookieParser());
