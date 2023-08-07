@@ -33,9 +33,6 @@ findfriendsRouter.get("/", async (req, res) => {
           : await User.find({
               _id: { $nin: [...loggedInUser.friends, ...allSenders, id] },
             });
-      // const allUsers = await User.find({
-      //   _id: { $nin: [...loggedInUser.friends, id] },
-      // });
 
       // all the friend request user has sent
       const friendRequestsSent = await FriendRequest.find({

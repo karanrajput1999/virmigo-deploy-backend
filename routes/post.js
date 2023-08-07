@@ -17,8 +17,10 @@ postRouter
 
       if (verifiedToken) {
         const { id } = verifiedToken;
+        // returns currently logged in user
         const loggedInUser = await User.findOne({ _id: Object(id) });
-        // const userAllPost = await Post.find({ userId: loggedInUser._id });
+
+        // returns all the posts user have posted
         const userWithAllPosts = await User.aggregate([
           { $match: { email: loggedInUser.email } },
           {
@@ -37,6 +39,8 @@ postRouter
             },
           },
         ]);
+
+        // returns all friends that user have
         const userAllFriends = await User.aggregate([
           {
             $match: { _id: { $in: loggedInUser.friends } },
@@ -46,32 +50,30 @@ postRouter
           },
         ]);
 
-        const allUsers = await User.find({
-          _id: { $nin: [...loggedInUser.friends, id] },
-        });
+        // const allUsers = await User.find({
+        //   _id: { $nin: [...loggedInUser.friends, id] },
+        // });
 
         // all the friend request user has sent
-        const friendRequestsSent = await FriendRequest.find({
-          sender: id,
-          status: 1,
-        });
+        // const friendRequestsSent = await FriendRequest.find({
+        //   sender: id,
+        //   status: 1,
+        // });
         // all the users whom friend request has been sent
-        const allFriendRequestsSent = await User.find({
-          _id: {
-            $in: friendRequestsSent.map(
-              (friendRequest) =>
-                new mongoose.Types.ObjectId(friendRequest.receiver)
-            ),
-          },
-        });
-
-        console.log("all the sent friend reqeust", allFriendRequestsSent);
+        // const allFriendRequestsSent = await User.find({
+        //   _id: {
+        //     $in: friendRequestsSent.map(
+        //       (friendRequest) =>
+        //         new mongoose.Types.ObjectId(friendRequest.receiver)
+        //     ),
+        //   },
+        // });
 
         res.status(200).json({
           userWithAllPosts,
           userAllFriends,
-          allUsers,
-          allFriendRequestsSent,
+          // allUsers,
+          // allFriendRequestsSent,
         });
       } else {
         res.end();
@@ -84,22 +86,22 @@ postRouter
   })
   .post(async (req, res) => {
     try {
-      const cookies = req.cookies["token"];
-      const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
       const {
         description,
         userId,
         username,
         unfriendId,
-        friendRequestReceiverId,
-        cancelRequestId,
+        // friendRequestReceiverId,
+        // cancelRequestId,
       } = req.body;
+
+      const cookies = req.cookies["token"];
+      const verifiedToken =
+        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
 
       if (verifiedToken) {
         const { id } = verifiedToken;
         const loggedInUser = await User.findOne({ _id: Object(id) });
-
         if (description && userId && username) {
           const post = await new Post({
             description,
@@ -108,6 +110,8 @@ postRouter
           });
           await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
           post.save();
+
+          console.log("post created");
 
           res.status(201).json(post);
         }
@@ -125,26 +129,26 @@ postRouter
           res.status(201).send("user unfriended");
         }
 
-        if (friendRequestReceiverId) {
-          const friendRequest = await new FriendRequest({
-            sender: id,
-            receiver: friendRequestReceiverId,
-            status: 1,
-          });
-          friendRequest.save();
-          res.status(201).json({ message: "friend Request Sent!" });
-        }
+        // if (friendRequestReceiverId) {
+        //   const friendRequest = await new FriendRequest({
+        //     sender: id,
+        //     receiver: friendRequestReceiverId,
+        //     status: 1,
+        //   });
+        //   friendRequest.save();
+        //   res.status(201).json({ message: "friend Request Sent!" });
+        // }
 
-        if (cancelRequestId) {
-          await FriendRequest.findOneAndDelete({
-            sender: id,
-            receiver: cancelRequestId,
-            status: 1,
-          });
-          res
-            .status(200)
-            .json({ cancelRequestId, message: "friend Request cancelled!" });
-        }
+        // if (cancelRequestId) {
+        //   await FriendRequest.findOneAndDelete({
+        //     sender: id,
+        //     receiver: cancelRequestId,
+        //     status: 1,
+        //   });
+        //   res
+        //     .status(200)
+        //     .json({ cancelRequestId, message: "friend Request cancelled!" });
+        // }
       }
     } catch (error) {
       console.log("error while posting a post from backend", error);
