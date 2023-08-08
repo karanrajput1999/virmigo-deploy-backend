@@ -2,6 +2,7 @@ const express = require("express");
 const postRouter = express.Router();
 const Post = require("../Models/post");
 const User = require("../Models/user");
+const Comment = require("../Models/comment");
 const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
@@ -21,7 +22,7 @@ postRouter
         const loggedInUser = await User.findOne({ _id: Object(id) });
 
         // returns all the posts user have posted
-        const userWithAllPosts = await User.aggregate([
+        const userWithAllPostsCopy = await User.aggregate([
           { $match: { email: loggedInUser.email } },
           {
             $lookup: {
@@ -32,6 +33,25 @@ postRouter
                 {
                   $sort: {
                     createdAt: -1,
+                  },
+                },
+
+                {
+                  $lookup: {
+                    from: "comments",
+                    localField: "_id",
+                    foreignField: "postId",
+                    pipeline: [
+                      {
+                        $lookup: {
+                          from: "users",
+                          localField: "commenterId",
+                          foreignField: "_id",
+                          as: "commentOwner",
+                        },
+                      },
+                    ],
+                    as: "postAllComments",
                   },
                 },
               ],
@@ -50,30 +70,12 @@ postRouter
           },
         ]);
 
-        // const allUsers = await User.find({
-        //   _id: { $nin: [...loggedInUser.friends, id] },
-        // });
-
-        // all the friend request user has sent
-        // const friendRequestsSent = await FriendRequest.find({
-        //   sender: id,
-        //   status: 1,
-        // });
-        // all the users whom friend request has been sent
-        // const allFriendRequestsSent = await User.find({
-        //   _id: {
-        //     $in: friendRequestsSent.map(
-        //       (friendRequest) =>
-        //         new mongoose.Types.ObjectId(friendRequest.receiver)
-        //     ),
-        //   },
         // });
 
         res.status(200).json({
           userWithAllPosts,
           userAllFriends,
-          // allUsers,
-          // allFriendRequestsSent,
+          userWithAllPostsCopy,
         });
       } else {
         res.end();
@@ -91,6 +93,8 @@ postRouter
         userId,
         username,
         unfriendId,
+        commentText,
+        postId,
         // friendRequestReceiverId,
         // cancelRequestId,
       } = req.body;
@@ -129,26 +133,21 @@ postRouter
           res.status(201).send("user unfriended");
         }
 
-        // if (friendRequestReceiverId) {
-        //   const friendRequest = await new FriendRequest({
-        //     sender: id,
-        //     receiver: friendRequestReceiverId,
-        //     status: 1,
-        //   });
-        //   friendRequest.save();
-        //   res.status(201).json({ message: "friend Request Sent!" });
-        // }
+        // creating comment
+        if (commentText && postId) {
+          const comment = await new Comment({
+            commenterId: id,
+            postId,
+            commentText,
+          });
+          comment.save();
 
-        // if (cancelRequestId) {
-        //   await FriendRequest.findOneAndDelete({
-        //     sender: id,
-        //     receiver: cancelRequestId,
-        //     status: 1,
-        //   });
-        //   res
-        //     .status(200)
-        //     .json({ cancelRequestId, message: "friend Request cancelled!" });
-        // }
+          await Post.updateOne(
+            { _id: postId },
+            { $push: { comments: comment._id } }
+          );
+          res.status(201).send("commented!");
+        }
       }
     } catch (error) {
       console.log("error while posting a post from backend", error);
