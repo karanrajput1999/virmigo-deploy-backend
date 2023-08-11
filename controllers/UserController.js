@@ -15,10 +15,11 @@ class UserController {
         const { id } = verifiedToken;
         const loggedInUser = await User.findOne({ _id: Object(id) });
         const user = await User.findOne({ _id: userId });
+        console.log("profile user", user);
         const { password, ...userProfile } = await user._doc;
         const userAllFriends = await User.aggregate([
           {
-            $match: { _id: { $in: loggedInUser.friends } },
+            $match: { _id: { $in: user.friends } },
           },
           {
             $project: { password: 0 },

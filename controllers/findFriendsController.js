@@ -23,7 +23,6 @@ class FindFriendsController {
         const allSenders = friendRequestsReceived.map((friendRequestSender) => {
           return friendRequestSender.sender;
         });
-        console.log("user has received fr from this user", allSenders.length);
 
         const allUsers =
           allSenders.length === 0

@@ -22,20 +22,56 @@ postRouter
         const loggedInUser = await User.findOne({ _id: Object(id) });
 
         // returns all the posts user have posted
-        const userWithAllPostsCopy = await User.aggregate([
-          { $match: { email: loggedInUser.email } },
+        // const userWithAllPosts = await User.aggregate([
+        //   { $match: { email: loggedInUser.email } },
+        //   {
+        //     $lookup: {
+        //       from: "posts",
+        //       localField: "_id",
+        //       foreignField: "userId",
+        //       pipeline: [
+        //         {
+        //           $sort: {
+        //             createdAt: -1,
+        //           },
+        //         },
+
+        //         {
+        //           $lookup: {
+        //             from: "comments",
+        //             localField: "_id",
+        //             foreignField: "postId",
+        //             pipeline: [
+        //               {
+        //                 $lookup: {
+        //                   from: "users",
+        //                   localField: "commenterId",
+        //                   foreignField: "_id",
+        //                   as: "commentOwner",
+        //                 },
+        //               },
+        //             ],
+        //             as: "postAllComments",
+        //           },
+        //         },
+        //       ],
+        //       as: "userAllPosts",
+        //     },
+        //   },
+        // ]);
+
+        const userWithAllPosts = await User.aggregate([
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(id),
+            },
+          },
           {
             $lookup: {
               from: "posts",
               localField: "_id",
               foreignField: "userId",
               pipeline: [
-                {
-                  $sort: {
-                    createdAt: -1,
-                  },
-                },
-
                 {
                   $lookup: {
                     from: "comments",
@@ -51,14 +87,74 @@ postRouter
                         },
                       },
                     ],
-                    as: "postAllComments",
+                    as: "postComments",
                   },
                 },
               ],
-              as: "userAllPosts",
+              as: "myPosts",
+            },
+          },
+          {
+            $lookup: {
+              from: "posts",
+              localField: "friends",
+              foreignField: "userId",
+              pipeline: [
+                {
+                  $lookup: {
+                    from: "comments",
+                    localField: "_id",
+                    foreignField: "postId",
+                    pipeline: [
+                      {
+                        $lookup: {
+                          from: "users",
+                          localField: "commenterId",
+                          foreignField: "_id",
+                          as: "commentOwner",
+                        },
+                      },
+                    ],
+                    as: "postComments",
+                  },
+                },
+              ],
+              as: "allFriendsPosts",
+            },
+          },
+
+          {
+            $set: {
+              allPostsCombined: {
+                $concatArrays: ["$myPosts", "$allFriendsPosts"],
+              },
+            },
+          },
+          { $unwind: "$allPostsCombined" },
+          {
+            $sort: {
+              "allPostsCombined.createdAt": -1,
+            },
+          },
+          {
+            $group: {
+              _id: "$_id",
+              name: { $first: "$name" },
+              email: { $first: "$email" },
+              bio: { $first: "$bio" },
+              livesIn: { $first: "$livesIn" },
+              profilePic: { $first: "$profilePic" },
+              coverPic: { $first: "$coverPic" },
+              coverPic: { $first: "$coverPic" },
+              allPostsCombined: { $push: "$allPostsCombined" },
             },
           },
         ]);
+
+        // console.log(
+        //   "friends post testing...",
+        //   friendsPosts[0].allPostsCombined[0].postComments
+        // );
 
         // returns all friends that user have
         const userAllFriends = await User.aggregate([
@@ -75,7 +171,7 @@ postRouter
         res.status(200).json({
           userWithAllPosts,
           userAllFriends,
-          userWithAllPostsCopy,
+          // userWithAllPostsCopy,
         });
       } else {
         res.end();

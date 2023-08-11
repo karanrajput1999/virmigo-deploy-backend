@@ -12,8 +12,6 @@ const UserSchema = new mongoose.Schema(
     posts: { type: Array },
     comments: { type: Array },
     friends: { type: Array },
-    friendRequestsSent: { type: Array },
-    friendRequests: { type: Array },
   },
   { timestamps: true }
 );
