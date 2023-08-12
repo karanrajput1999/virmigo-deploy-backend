@@ -146,6 +146,8 @@ postRouter
               profilePic: { $first: "$profilePic" },
               coverPic: { $first: "$coverPic" },
               coverPic: { $first: "$coverPic" },
+              createdAt: { $first: "$createdAt" },
+              updatedAt: { $first: "$updatedAt" },
               allPostsCombined: { $push: "$allPostsCombined" },
             },
           },
@@ -242,7 +244,13 @@ postRouter
             { _id: postId },
             { $push: { comments: comment._id } }
           );
-          res.status(201).send("commented!");
+          const latestComment = {
+            ...comment._doc,
+            commentOwner: [loggedInUser],
+          };
+          res
+            .status(201)
+            .json({ message: "commented!", comment: latestComment });
         }
       }
     } catch (error) {
