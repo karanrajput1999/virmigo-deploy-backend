@@ -256,6 +256,16 @@ postRouter
     } catch (error) {
       console.log("error while posting a post from backend", error);
     }
+  })
+  .delete(async (req, res) => {
+    try {
+      const { deletePostId } = req.body;
+      await Post.findByIdAndDelete({ _id: deletePostId });
+      console.log(deletePostId);
+      res.status(200).json({ message: "Post Deleted!" });
+    } catch (error) {
+      console.log("something went wrong while deleting post", error);
+    }
   });
 
 module.exports = postRouter;
