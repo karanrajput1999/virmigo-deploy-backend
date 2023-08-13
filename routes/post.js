@@ -21,45 +21,7 @@ postRouter
         // returns currently logged in user
         const loggedInUser = await User.findOne({ _id: Object(id) });
 
-        // returns all the posts user have posted
-        // const userWithAllPosts = await User.aggregate([
-        //   { $match: { email: loggedInUser.email } },
-        //   {
-        //     $lookup: {
-        //       from: "posts",
-        //       localField: "_id",
-        //       foreignField: "userId",
-        //       pipeline: [
-        //         {
-        //           $sort: {
-        //             createdAt: -1,
-        //           },
-        //         },
-
-        //         {
-        //           $lookup: {
-        //             from: "comments",
-        //             localField: "_id",
-        //             foreignField: "postId",
-        //             pipeline: [
-        //               {
-        //                 $lookup: {
-        //                   from: "users",
-        //                   localField: "commenterId",
-        //                   foreignField: "_id",
-        //                   as: "commentOwner",
-        //                 },
-        //               },
-        //             ],
-        //             as: "postAllComments",
-        //           },
-        //         },
-        //       ],
-        //       as: "userAllPosts",
-        //     },
-        //   },
-        // ]);
-
+        // returns all the posts user and his friends have posted with sorted by recent posts
         const userWithAllPosts = await User.aggregate([
           {
             $match: {
@@ -153,11 +115,6 @@ postRouter
           },
         ]);
 
-        // console.log(
-        //   "friends post testing...",
-        //   friendsPosts[0].allPostsCombined[0].postComments
-        // );
-
         // returns all friends that user have
         const userAllFriends = await User.aggregate([
           {
@@ -193,6 +150,7 @@ postRouter
         unfriendId,
         commentText,
         postId,
+        likedPostId,
         // friendRequestReceiverId,
         // cancelRequestId,
       } = req.body;
@@ -251,6 +209,28 @@ postRouter
           res
             .status(201)
             .json({ message: "commented!", comment: latestComment });
+        }
+
+        // like post
+        if (likedPostId) {
+          const alreadyLiked = await Post.findOne({
+            _id: likedPostId,
+            likes: { $elemMatch: { $eq: new mongoose.Types.ObjectId(id) } },
+          });
+
+          if (alreadyLiked) {
+            await Post.findByIdAndUpdate(
+              { _id: likedPostId },
+              { $pull: { likes: new mongoose.Types.ObjectId(id) } }
+            );
+            res.status(200).json({ message: "post unliked!" });
+          } else {
+            await Post.findByIdAndUpdate(
+              { _id: likedPostId },
+              { $push: { likes: new mongoose.Types.ObjectId(id) } }
+            );
+            res.status(200).json({ message: "post liked!" });
+          }
         }
       }
     } catch (error) {
