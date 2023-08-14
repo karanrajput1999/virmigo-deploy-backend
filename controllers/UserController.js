@@ -15,7 +15,7 @@ class UserController {
         const { id } = verifiedToken;
         const loggedInUser = await User.findOne({ _id: Object(id) });
         const user = await User.findOne({ _id: userId });
-        console.log("profile user", user);
+
         const { password, ...userProfile } = await user._doc;
         const userAllFriends = await User.aggregate([
           {
@@ -25,6 +25,9 @@ class UserController {
             $project: { password: 0 },
           },
         ]);
+
+        console.log("user all friends ->", userAllFriends);
+
         // all the friend request user has sent
         const friendRequestsSent = await FriendRequest.find({
           sender: id,
