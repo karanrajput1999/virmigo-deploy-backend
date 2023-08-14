@@ -26,7 +26,54 @@ class UserController {
           },
         ]);
 
-        console.log("user all friends ->", userAllFriends);
+        const userAllPosts = await User.aggregate([
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(userId),
+            },
+          },
+          {
+            $lookup: {
+              from: "posts",
+              localField: "_id",
+              foreignField: "userId",
+              pipeline: [
+                {
+                  $lookup: {
+                    from: "comments",
+                    localField: "_id",
+                    foreignField: "postId",
+                    pipeline: [
+                      {
+                        $lookup: {
+                          from: "users",
+                          localField: "commenterId",
+                          foreignField: "_id",
+                          as: "commentOwner",
+                        },
+                      },
+                    ],
+                    as: "postComments",
+                  },
+                },
+                {
+                  $lookup: {
+                    from: "users",
+                    localField: "likes",
+                    foreignField: "_id",
+                    as: "likedUsers",
+                  },
+                },
+                {
+                  $sort: {
+                    createdAt: -1,
+                  },
+                },
+              ],
+              as: "userPosts",
+            },
+          },
+        ]);
 
         // all the friend request user has sent
         const friendRequestsSent = await FriendRequest.find({
@@ -48,6 +95,7 @@ class UserController {
           loggedInUser,
           userAllFriends,
           allFriendRequestsSent,
+          userAllPosts,
         });
       } else {
         res.status(400).end();

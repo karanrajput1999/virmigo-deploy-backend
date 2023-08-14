@@ -10,6 +10,7 @@ const mongoose = require("mongoose");
 postRouter
   .route("/")
   .get(async (req, res) => {
+    console.log("url paramteres", req.params);
     try {
       const cookies = req.cookies["token"];
       // console.log("this is cookies while get request to login", req.cookies);
