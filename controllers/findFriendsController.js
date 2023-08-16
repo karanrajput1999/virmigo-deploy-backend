@@ -106,6 +106,10 @@ class FindFriendsController {
               status: 1,
             });
             notification.save();
+            await User.updateOne(
+              { _id: receiverId },
+              { $push: { notifications: notification._id } }
+            );
           }
           newFriendRequest.save();
 

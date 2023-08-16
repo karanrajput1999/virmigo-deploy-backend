@@ -130,6 +130,7 @@ postRouter
               coverPic: { $first: "$coverPic" },
               createdAt: { $first: "$createdAt" },
               updatedAt: { $first: "$updatedAt" },
+              notifications: { $first: "$notifications" },
               allPostsCombined: { $push: "$allPostsCombined" },
             },
           },

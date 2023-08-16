@@ -9,6 +9,7 @@ const findfriendsRouter = require("./routes/findfriends");
 const userRouter = require("./routes/user");
 const logoutRouter = require("./routes/logout");
 const postRouter = require("./routes/post");
+const notificationsRouter = require("./routes/notifications");
 
 app.use(express.json());
 app.use(
@@ -30,6 +31,7 @@ app.use("/login", loginRouter);
 app.use("/logout", logoutRouter);
 app.use("/findfriends", findfriendsRouter);
 app.use("/user", userRouter);
+app.use("/notifications", notificationsRouter);
 app.use("/", postRouter);
 
 app.get("/", (req, res) => {
