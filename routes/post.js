@@ -10,10 +10,8 @@ const mongoose = require("mongoose");
 postRouter
   .route("/")
   .get(async (req, res) => {
-    console.log("url paramteres", req.params);
     try {
       const cookies = req.cookies["token"];
-      // console.log("this is cookies while get request to login", req.cookies);
       const verifiedToken =
         cookies && jwt.verify(cookies, "SomeSecretCodeHere");
 
@@ -109,7 +107,12 @@ postRouter
               },
             },
           },
-          { $unwind: "$allPostsCombined" },
+          {
+            $unwind: {
+              path: "$allPostsCombined",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
           {
             $sort: {
               "allPostsCombined.createdAt": -1,
@@ -395,13 +398,10 @@ postRouter
           await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
           post.save();
 
-          console.log("post created");
-
           res.status(201).json(post);
         }
 
         if (unfriendId) {
-          console.log("friend id to unfriend", unfriendId);
           await User.updateOne(
             { _id: id },
             { $pull: { friends: new mongoose.Types.ObjectId(unfriendId) } }
@@ -465,7 +465,6 @@ postRouter
     try {
       const { deletePostId } = req.body;
       await Post.findByIdAndDelete({ _id: deletePostId });
-      console.log(deletePostId);
       res.status(200).json({ message: "Post Deleted!" });
     } catch (error) {
       console.log("something went wrong while deleting post", error);

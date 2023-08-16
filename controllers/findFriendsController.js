@@ -3,6 +3,7 @@ const Post = require("../Models/post");
 const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const Notification = require("../Models/notification");
 
 class FindFriendsController {
   async findFriendsGet(req, res) {
@@ -91,11 +92,21 @@ class FindFriendsController {
         const { receiverId, senderId, rejectSenderId, cancelRequestId } =
           req.body;
 
+        // send friend request
         if (receiverId) {
           const newFriendRequest = new FriendRequest({
             sender: id,
             receiver: receiverId,
           });
+          // do not send the notification if sender and receiver is same (someone likes/comment on his own post)
+          if (receiverId !== id) {
+            const notification = await new Notification({
+              sender: id,
+              receiver: receiverId,
+              status: 1,
+            });
+            notification.save();
+          }
           newFriendRequest.save();
 
           res.status(201).json({ message: "friend Request Sent!" });

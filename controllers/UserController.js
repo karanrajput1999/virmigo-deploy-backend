@@ -128,15 +128,18 @@ class UserController {
           );
           res.status(200).send("user unfriended");
         }
+        // send friend request
         if (friendRequestReceiverId) {
           const friendRequest = await new FriendRequest({
             sender: id,
             receiver: friendRequestReceiverId,
             status: 1,
           });
+
           friendRequest.save();
           res.status(201).json({ message: "friend Request Sent!" });
         }
+        // cancel friend request
         if (cancelRequestId) {
           await FriendRequest.findOneAndDelete({
             sender: id,
