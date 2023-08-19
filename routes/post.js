@@ -415,7 +415,7 @@ postRouter
           res.status(201).send("user unfriended");
         }
 
-        // creating comment
+        // comment on post
         if (commentText && postId) {
           const comment = await new Comment({
             commenterId: id,
@@ -432,6 +432,26 @@ postRouter
             ...comment._doc,
             commentOwner: [loggedInUser],
           };
+
+          const postOwnerId = await Post.findOne({ _id: postId });
+
+          // do not send the notification if sender and receiver is same (someone likes/comment on his own post)
+          if (
+            postOwnerId.userId.toString() !==
+            new mongoose.Types.ObjectId(id).toString()
+          ) {
+            const notification = await new Notification({
+              sender: id,
+              receiver: postOwnerId.userId,
+              status: 4,
+            });
+            notification.save();
+            await User.updateOne(
+              { _id: postOwnerId.userId },
+              { $push: { notifications: notification._id } }
+            );
+          }
+
           res
             .status(201)
             .json({ message: "commented!", comment: latestComment });
