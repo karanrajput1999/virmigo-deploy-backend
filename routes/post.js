@@ -6,6 +6,7 @@ const Comment = require("../Models/comment");
 const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const Notification = require("../Models/notification");
 
 postRouter
   .route("/")
@@ -444,16 +445,51 @@ postRouter
           });
 
           if (alreadyLiked) {
-            await Post.findByIdAndUpdate(
+            const likedPost = await Post.findByIdAndUpdate(
               { _id: likedPostId },
               { $pull: { likes: new mongoose.Types.ObjectId(id) } }
             );
+            const postOwnerId = await User.findOne({ _id: likedPost.userId });
+
+            // remove the notification when post is unliked
+            const likeNotification = await Notification.findOne({
+              sender: id,
+              receiver: postOwnerId,
+              status: 3,
+            });
+
+            await Notification.findByIdAndDelete({ _id: likeNotification._id });
+
+            console.log(
+              "remove this notification when unliked",
+              likeNotification
+            );
             res.status(200).json({ message: "post unliked!" });
           } else {
-            await Post.findByIdAndUpdate(
+            const likedPost = await Post.findByIdAndUpdate(
               { _id: likedPostId },
               { $push: { likes: new mongoose.Types.ObjectId(id) } }
             );
+
+            const postOwnerId = await User.findOne({ _id: likedPost.userId });
+
+            // do not send the notification if sender and receiver is same (someone likes/comment on his own post)
+            if (
+              postOwnerId._id.toString() !==
+              new mongoose.Types.ObjectId(id).toString()
+            ) {
+              const notification = await new Notification({
+                sender: id,
+                receiver: postOwnerId,
+                status: 3,
+              });
+              notification.save();
+              await User.updateOne(
+                { _id: postOwnerId },
+                { $push: { notifications: notification._id } }
+              );
+            }
+
             res.status(200).json({ message: "post liked!" });
           }
         }

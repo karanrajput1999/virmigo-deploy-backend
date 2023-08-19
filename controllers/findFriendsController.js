@@ -130,6 +130,20 @@ class FindFriendsController {
             { $push: { friends: new mongoose.Types.ObjectId(id) } }
           );
 
+          // do not send the notification if sender and receiver is same (someone likes/comment on his own post)
+          if (senderId !== id) {
+            const notification = await new Notification({
+              sender: id,
+              receiver: senderId,
+              status: 2,
+            });
+            notification.save();
+            await User.updateOne(
+              { _id: senderId },
+              { $push: { notifications: notification._id } }
+            );
+          }
+
           /* checks if both user has sent friend requests to each other and if they have, 
               when one of the user accepts the friend request other friend request gets deleted */
           const duplicateFriendRequest = await FriendRequest.findOne({
