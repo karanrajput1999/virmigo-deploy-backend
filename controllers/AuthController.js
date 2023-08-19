@@ -23,8 +23,12 @@ class AuthController {
 
       res.status(200).json(newUserCopy);
     } catch (error) {
-      console.log("signup", error.message);
-      res.status(500).json("Something went wrong!");
+      console.log("signup error", error);
+      if (error.code === 11000) {
+        res.status(401).send("Email Already exist!");
+      } else {
+        res.status(500).json("Something went wrong!");
+      }
     }
   }
 
@@ -76,10 +80,10 @@ class AuthController {
 
           res.status(200).json(matchedUser);
         } else {
-          res.status(400).send("Wrong credentials!");
+          res.status(401).send("Wrong credentials!");
         }
       } else {
-        res.status(400).send("Wrong credentials!");
+        res.status(401).send("No user found with this email!");
       }
     } catch (error) {
       console.log("error while logging in", error);
