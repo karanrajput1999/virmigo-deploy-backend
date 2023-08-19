@@ -107,6 +107,19 @@ class AuthController {
       res.status(500).send("Something went wrong!");
     }
   }
+
+  async logout(req, res) {
+    try {
+      res.clearCookie("token", {
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      });
+      res.end();
+    } catch (error) {
+      console.log("error while logging out from backend", error);
+    }
+  }
 }
 
 module.exports = new AuthController();
