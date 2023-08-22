@@ -12,6 +12,7 @@ const postRouter = require("./routes/post");
 const notificationsRouter = require("./routes/notifications");
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: "http://127.0.0.1:5173",

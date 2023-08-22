@@ -5,14 +5,16 @@ const bcrypt = require("bcrypt");
 class AuthController {
   async signupPost(req, res) {
     const { name, email, password } = req.body;
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    console.log("finally will see signup req body ->", req);
     try {
       const newUser = new User({
         name,
         email,
         password: hashedPassword,
+        profilePic: req.profilePicURL || null,
+        coverPic: req.coverPicURL || null,
       });
 
       await newUser.save();
@@ -78,7 +80,8 @@ class AuthController {
             secure: true,
           });
 
-          res.status(200).json(matchedUser);
+          const { password, ...matchedUserWithoutPassword } = matchedUser._doc;
+          res.status(200).json(matchedUserWithoutPassword);
         } else {
           res.status(401).send("Wrong credentials!");
         }
