@@ -7,7 +7,6 @@ class AuthController {
     const { name, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    console.log("finally will see signup req body ->", req);
     try {
       const newUser = new User({
         name,

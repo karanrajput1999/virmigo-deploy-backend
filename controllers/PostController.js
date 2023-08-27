@@ -5,6 +5,12 @@ const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Notification = require("../Models/notification");
+const {
+  storage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} = require("../config/firebase");
 
 class PostController {
   async postGet(req, res) {
@@ -389,17 +395,51 @@ class PostController {
       if (verifiedToken) {
         const { id } = verifiedToken;
         const loggedInUser = await User.findOne({ _id: Object(id) });
-        if (description && userId && username) {
+        if (description || req.file) {
+          let postImageUrl;
+
+          if (req.file) {
+            const postImageRef = await ref(
+              storage,
+              `post/${req.file.originalname}`
+            );
+
+            const postImageFileType = {
+              contentType: req.file.mimetype,
+            };
+
+            const postImageSnapshot = await uploadBytesResumable(
+              postImageRef,
+              req.file.buffer,
+              postImageFileType
+            );
+
+            const imageUrl = await getDownloadURL(postImageSnapshot.ref);
+            postImageUrl = imageUrl;
+          }
+
           const post = await new Post({
             description,
             userId: userId,
             username,
+            image: postImageUrl || null,
           });
           await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
           post.save();
 
           res.status(201).json(post);
         }
+        // if (description) {
+        //   const post = await new Post({
+        //     description,
+        //     userId: userId,
+        //     username,
+        //   });
+        //   await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
+        //   post.save();
+
+        //   res.status(201).json(post);
+        // }
 
         if (unfriendId) {
           await User.updateOne(
