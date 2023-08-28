@@ -9,8 +9,6 @@ const {
 class Validators {
   async signupValidator(req, res, next) {
     try {
-      console.log("request body inside validator", req.body);
-
       const schema = Joi.object({
         name: Joi.string().min(3).max(25).required(),
         email: Joi.string().required(),
