@@ -189,165 +189,6 @@ class PostController {
           },
         ]);
 
-        // const userWithAllPosts2 = await User.aggregate([
-        //   {
-        //     $match: {
-        //       _id: new mongoose.Types.ObjectId(id),
-        //     },
-        //   },
-        //   {
-        //     $lookup: {
-        //       from: "posts",
-        //       localField: "_id",
-        //       foreignField: "userId",
-        //       pipeline: [
-        //         {
-        //           $lookup: {
-        //             from: "comments",
-        //             localField: "_id",
-        //             foreignField: "postId",
-        //             pipeline: [
-        //               {
-        //                 $lookup: {
-        //                   from: "users",
-        //                   localField: "commenterId",
-        //                   foreignField: "_id",
-        //                   as: "commentOwner",
-        //                 },
-        //               },
-        //             ],
-        //             as: "postComments",
-        //           },
-        //         },
-        //         {
-        //           $lookup: {
-        //             from: "users",
-        //             localField: "likes",
-        //             foreignField: "_id",
-        //             as: "likedUsers",
-        //           },
-        //         },
-        //       ],
-        //       as: "myPosts",
-        //     },
-        //   },
-        //   {
-        //     $lookup: {
-        //       from: "posts",
-        //       localField: "friends",
-        //       foreignField: "userId",
-        //       pipeline: [
-        //         {
-        //           $lookup: {
-        //             from: "comments",
-        //             localField: "_id",
-        //             foreignField: "postId",
-        //             pipeline: [
-        //               {
-        //                 $lookup: {
-        //                   from: "users",
-        //                   localField: "commenterId",
-        //                   foreignField: "_id",
-        //                   as: "commentOwner",
-        //                 },
-        //               },
-        //             ],
-        //             as: "postComments",
-        //           },
-        //         },
-        //         {
-        //           $lookup: {
-        //             from: "users",
-        //             localField: "likes",
-        //             foreignField: "_id",
-        //             as: "likedUsers",
-        //           },
-        //         },
-        //       ],
-        //       as: "allFriendsPosts",
-        //     },
-        //   },
-
-        //   {
-        //     $set: {
-        //       allPostsCombined: {
-        //         $concatArrays: ["$myPosts", "$allFriendsPosts"],
-        //       },
-        //     },
-        //   },
-        //   { $unwind: "$allPostsCombined" },
-        //   {
-        //     $sort: {
-        //       "allPostsCombined.createdAt": -1,
-        //     },
-        //   },
-        //   {
-        //     $group: {
-        //       _id: "$_id",
-        //       name: { $first: "$name" },
-        //       email: { $first: "$email" },
-        //       bio: { $first: "$bio" },
-        //       livesIn: { $first: "$livesIn" },
-        //       profilePic: { $first: "$profilePic" },
-        //       coverPic: { $first: "$coverPic" },
-        //       coverPic: { $first: "$coverPic" },
-        //       createdAt: { $first: "$createdAt" },
-        //       updatedAt: { $first: "$updatedAt" },
-        //       allPostsCombined: { $push: "$allPostsCombined" },
-        //     },
-        //   },
-        // ]);
-
-        // const tempPosts = await User.aggregate([
-        //   { $match: { _id: new mongoose.Types.ObjectId(id) } },
-        //   {
-        //     $lookup: {
-        //       from: "users",
-        //       localField: "friends",
-        //       foreignField: "_id",
-        //       pipeline: [
-        //         {
-        //           $lookup: {
-        //             from: "posts",
-        //             localField: "_id",
-        //             foreignField: "userId",
-        //             pipeline: [
-        //               {
-        //                 $lookup: {
-        //                   from: "comments",
-        //                   localField: "_id",
-        //                   foreignField: "postId",
-        //                   as: "postComments",
-        //                 },
-        //               },
-        //               {
-        //                 $lookup: {
-        //                   from: "users",
-        //                   localField: "likes",
-        //                   foreignField: "_id",
-        //                   as: "likedUsers",
-        //                 },
-        //               },
-        //             ],
-        //             as: "friendsPosts",
-        //           },
-        //         },
-        //       ],
-        //       as: "allfriends",
-        //     },
-        //   },
-        // ]);
-
-        // console.log(
-        //   "temporary post testing",
-        //   tempPosts[0].allfriends[0].friendsPosts[0].postComments
-        // );
-
-        // console.log(
-        //   "users liked testing",
-        //   userWithAllPosts2[0].allPostsCombined
-        // );
-
         // returns all friends that user have
         const userAllFriends = await User.aggregate([
           {
@@ -380,6 +221,7 @@ class PostController {
         description,
         userId,
         username,
+        userProfilePic,
         unfriendId,
         commentText,
         postId,
@@ -418,11 +260,14 @@ class PostController {
             postImageUrl = imageUrl;
           }
 
+          console.log("userProfilePic");
           const post = await new Post({
             description,
             userId: userId,
             username,
             image: postImageUrl || null,
+            // formData is converting null to null of string that's why had to do this
+            userProfilePic: userProfilePic === "null" ? null : userProfilePic,
           });
           await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
           post.save();
