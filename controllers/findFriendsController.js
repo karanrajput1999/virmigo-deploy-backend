@@ -4,13 +4,14 @@ const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Notification = require("../Models/notification");
+require("dotenv").config();
 
 class FindFriendsController {
   async findFriendsGet(req, res) {
     try {
       const cookies = req.cookies["token"];
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 
       if (verifiedToken) {
         const { id } = verifiedToken;
@@ -85,7 +86,7 @@ class FindFriendsController {
     try {
       const cookies = req.cookies["token"];
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 
       if (verifiedToken) {
         const { id } = verifiedToken;

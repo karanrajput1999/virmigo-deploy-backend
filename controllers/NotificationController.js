@@ -1,13 +1,14 @@
 const User = require("../Models/user");
 const Notification = require("../Models/notification");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 class NotificationController {
   async notificationGet(req, res) {
     try {
       const cookies = req.cookies["token"];
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 
       if (verifiedToken) {
         const { id } = verifiedToken;

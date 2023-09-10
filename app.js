@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 require("./config/db");
+require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const signupRouter = require("./routes/signup");
@@ -39,6 +40,6 @@ app.get("/", (req, res) => {
   res.send("Yo it worked!");
 });
 
-app.listen(3000, () => {
-  console.log("Server started!");
+app.listen(process.env.PORT, () => {
+  console.log(`Server started at port no ${process.env.PORT}!`);
 });

@@ -1,6 +1,7 @@
 const User = require("../Models/user");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+require("dotenv").config();
 
 class AuthController {
   async signupPost(req, res) {
@@ -38,7 +39,7 @@ class AuthController {
       const cookies = req.cookies["token"];
       // console.log("this is cookies while get request to signup", req.cookies);
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 
       if (verifiedToken) {
         const { id } = verifiedToken;
@@ -58,7 +59,7 @@ class AuthController {
   async loginPost(req, res) {
     const { email, password } = req.body;
     const createToken = function (id) {
-      return jwt.sign({ id }, "SomeSecretCodeHere");
+      return jwt.sign({ id }, process.env.JWT_SECRET);
     };
 
     try {
@@ -98,7 +99,7 @@ class AuthController {
       const cookies = req.cookies["token"];
       // console.log("this is cookies while get request to login", req.cookies);
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 
       if (verifiedToken) {
         const { id } = verifiedToken;

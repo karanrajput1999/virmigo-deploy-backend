@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { default: mongoose } = require("mongoose");
 const FriendRequest = require("../Models/friendRequest");
 const Joi = require("joi");
+require("dotenv").config();
 
 class UserController {
   async UserControllerGet(req, res) {
@@ -11,7 +12,7 @@ class UserController {
 
       const cookies = req.cookies["token"];
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
       if (verifiedToken) {
         const { id } = verifiedToken;
         const loggedInUser = await User.findOne({ _id: Object(id) });
@@ -114,7 +115,7 @@ class UserController {
     try {
       const cookies = req.cookies["token"];
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
       if (verifiedToken) {
         const { id } = verifiedToken;
 
@@ -162,7 +163,7 @@ class UserController {
     try {
       const cookies = req.cookies["token"];
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
       if (verifiedToken) {
         const { id } = verifiedToken;
         const loggedInUser = await User.findOne({ _id: Object(id) });

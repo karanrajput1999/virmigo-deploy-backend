@@ -1,13 +1,11 @@
 const mongoose = require("mongoose");
+require("dotenv").config();
 
 const db = mongoose
-  .connect(
-    "mongodb+srv://docsdelhi7:virmigo123@virmigo-cluster.ydziizz.mongodb.net/?retryWrites=true&w=majority",
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
+  .connect(process.env.DB_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     console.log("Database connected!");
   });

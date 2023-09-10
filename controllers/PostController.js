@@ -11,13 +11,14 @@ const {
   uploadBytesResumable,
   getDownloadURL,
 } = require("../config/firebase");
+require("dotenv").config();
 
 class PostController {
   async postGet(req, res) {
     try {
       const cookies = req.cookies["token"];
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 
       if (verifiedToken) {
         const { id } = verifiedToken;
@@ -232,7 +233,7 @@ class PostController {
 
       const cookies = req.cookies["token"];
       const verifiedToken =
-        cookies && jwt.verify(cookies, "SomeSecretCodeHere");
+        cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 
       if (verifiedToken) {
         const { id } = verifiedToken;
@@ -361,7 +362,9 @@ class PostController {
               status: 3,
             });
 
-            await Notification.findByIdAndDelete({ _id: likeNotification._id });
+            await Notification.findByIdAndDelete({
+              _id: likeNotification?._id,
+            });
 
             console.log(
               "remove this notification when unliked",
