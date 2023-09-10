@@ -261,7 +261,6 @@ class PostController {
             postImageUrl = imageUrl;
           }
 
-          console.log("userProfilePic");
           const post = await new Post({
             description,
             userId: userId,
