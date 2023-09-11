@@ -1,6 +1,6 @@
 const User = require("../Models/user");
 const jwt = require("jsonwebtoken");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 const FriendRequest = require("../Models/friendRequest");
 const Joi = require("joi");
 require("dotenv").config();

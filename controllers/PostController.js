@@ -1,7 +1,6 @@
 const Post = require("../Models/post");
 const User = require("../Models/user");
 const Comment = require("../Models/comment");
-const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Notification = require("../Models/notification");
@@ -274,17 +273,6 @@ class PostController {
 
           res.status(201).json(post);
         }
-        // if (description) {
-        //   const post = await new Post({
-        //     description,
-        //     userId: userId,
-        //     username,
-        //   });
-        //   await User.updateOne({ _id: userId }, { $push: { posts: post._id } });
-        //   post.save();
-
-        //   res.status(201).json(post);
-        // }
 
         if (unfriendId) {
           await User.updateOne(

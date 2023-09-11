@@ -7,6 +7,9 @@ class AuthController {
   async signupPost(req, res) {
     const { name, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
+    const createToken = function (id) {
+      return jwt.sign({ id }, process.env.JWT_SECRET);
+    };
 
     try {
       const newUser = new User({
@@ -17,7 +20,15 @@ class AuthController {
         coverPic: req.coverPicURL || null,
       });
 
-      await newUser.save();
+      const signedUpUser = await newUser.save();
+
+      const token = createToken(signedUpUser._id);
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 900000000),
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      });
 
       // creating a copy of newUser so that I can delete password and some other properties
       const { password, createdAt, updatedAt, __v, ...newUserCopy } =
@@ -37,14 +48,12 @@ class AuthController {
   async signupGet(req, res) {
     try {
       const cookies = req.cookies["token"];
-      // console.log("this is cookies while get request to signup", req.cookies);
       const verifiedToken =
         cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 
       if (verifiedToken) {
         const { id } = verifiedToken;
         const loggedInUser = await User.findOne({ _id: Object(id) });
-        console.log("signup get request from backend", loggedInUser);
         res.status(200).json(loggedInUser);
       } else {
         res.end();
@@ -97,7 +106,6 @@ class AuthController {
   async loginGet(req, res) {
     try {
       const cookies = req.cookies["token"];
-      // console.log("this is cookies while get request to login", req.cookies);
       const verifiedToken =
         cookies && jwt.verify(cookies, process.env.JWT_SECRET);
 

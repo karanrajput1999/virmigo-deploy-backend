@@ -1,5 +1,4 @@
 const User = require("../Models/user");
-const Post = require("../Models/post");
 const FriendRequest = require("../Models/friendRequest");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");

@@ -13,9 +13,6 @@ class NotificationController {
       if (verifiedToken) {
         const { id } = verifiedToken;
         const loggedInUser = await User.findOne({ _id: Object(id) });
-        //   const notifications = await Notification.find({
-        //     _id: { $in: loggedInUser.notifications },
-        //   });
 
         const notifications = await Notification.aggregate([
           {
