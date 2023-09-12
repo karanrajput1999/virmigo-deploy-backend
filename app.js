@@ -17,14 +17,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     // origin: "http://127.0.0.1:5173",
-    origin: "virmigo.vercel.app",
+    origin: "https://virmigo.vercel.app",
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   })
 );
 app.use((req, res, next) => {
   // res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5173");
-  res.setHeader("Access-Control-Allow-Origin", "virmigo.vercel.app");
+  res.setHeader("Access-Control-Allow-Origin", "https://virmigo.vercel.app");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
   next();
