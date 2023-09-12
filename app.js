@@ -18,12 +18,12 @@ app.use(
   cors({
     origin: "https://virmigo.vercel.app",
     methods: ["GET", "POST", "PATCH", "DELETE"],
-    credentials: true,
+    credentials: "true",
   })
 );
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "https://virmigo.vercel.app");
-  res.setHeader("Access-Control-Allow-Credentials", true);
+  res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
   next();
 });
