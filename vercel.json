@@ -3,17 +3,5 @@
   "name": "virmigo",
   "builds": [{ "src": "app.js", "use": "@vercel/node" }],
 
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
-
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "./app.js",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "https://virmigo.vercel.app",
-        "Access-Control-Allow-Credentials": "true"
-      }
-    }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }
