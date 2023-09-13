@@ -3,6 +3,8 @@
   "name": "virmigo",
   "builds": [{ "src": "app.js", "use": "@vercel/node" }],
 
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
+
   "routes": [
     {
       "src": "/(.*)",
